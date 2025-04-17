@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,17 +14,21 @@ export default function LoginPage() {
     setLoading(true);
     setMessage(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
+    console.log("respons data:", data)
+    console.log("error:", error)
+
     if (error) {
       setMessage({ type: "error", text: error.message });
-    } else {
+    } else if (data?.session) {
       setMessage({ type: "success", text: "Logged in successfully!" });
-      // Redirect to /home or wherever next
       window.location.href = "/home";
+    } else {
+      setMessage({type: "error", text: "Login succedded but no session"})
     }
 
     setLoading(false);

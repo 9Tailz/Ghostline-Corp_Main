@@ -1,50 +1,83 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function HomePage() {
-    const [user, setUser] = useState(null);
-    const [profile, setProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-    useEffect(() => {
-    async function fetchUserProfile() {
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+  // 1. You track 'user' state but never update it. That's a problem.
+  const [user, setUser] = useState(null);
 
-    setUser(user);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    if (user) {
-        // Fetch profile from 'profiles' table
-        const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name, id, role")
-        .eq("id", user.id)
-        .single();
+  useEffect(() => {
+    async function fetchLoggedUser() {
+      try {
+        // 2. Obtain the session properly and await the Promise.
+        const sessionResponse = await supabase.auth.getSession();
+        const accessToken = sessionResponse.data?.session.access_token;
 
-        if (!error) {
-            setProfile(data);
+        if (!accessToken) {
+          // 3. No token means no user - set loading false and clear states
+          setUser(null);          // <-- Add this to clear user state
+          setProfile(null);
+          setLoading(false);
+          console.log("No token found")
+          return;
         }
+
+        // 4. Call your backend with this token in Authorization header
+        const res = await fetch('/api/auth/getUser', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+
+        if (!res.ok) {
+          setUser(null);          // <-- Add this too
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+
+        const json = await res.json();
+
+        // 5. IMPORTANT: You never update 'user' state anywhere
+        // You need to setUser here from the returned data.
+        // Assuming your API returns something like { user: ..., profile: ... }
+        setUser(json.user || null);
+        setProfile(json.profile || null);
+
+      } catch (error) {
+        console.error("Error fetching logged user:", error);
+
+        // 6. On error, reset user and profile states
+        setUser(null);
+        setProfile(null);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    setLoading(false);
-    }
+    fetchLoggedUser();
+  }, []);
 
-    fetchUserProfile();
-}, []);
-
-if (loading) {
+  // 7. Your loading UI - good
+  if (loading) {
     return <p style={{ padding: "2rem" }}>Loading...</p>;
-}
+  }
 
-if (!user) {
+  // 8. Check for user - good, now will work since 'user' is set correctly above
+  if (!user) {
     return <p style={{ padding: "2rem" }}>You are not logged in.</p>;
-}
+  }
 
-const displayName = profile?.email || user.email || "No name";
-const role = profile?.role || "user";
+  // 9. Display variables - changed to use profile.display_name (or user.email as fallback)
+  //    Also fix displayName typo from sample
+  const displayName = profile?.display_name || user.email || "No name";
+  const role = profile?.role || "user";
 
 return (
     <>
@@ -55,7 +88,7 @@ return (
         height: 100vh;
         padding: 1rem 2rem;
         box-sizing: border-box;
-        font-family: 'Poppins', sans-serif;
+        font-family: 'geist', latin;
         background: #f3f4f6;
         }
 
@@ -125,6 +158,21 @@ return (
     .box:hover {
         box-shadow: 0 8px 16px rgba(102, 126, 234, 0.8);
     }
+    
+    .admin-button {
+        margin-top: 1.5rem;
+        padding: 0.5rem;
+        background: #5a6d8;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transitiion: background 0.3 ease;
+    }
+    .admin-button:hover {
+      background: #434190
+    }
 
     @media (max-width: 768px) {
         .box {
@@ -146,12 +194,20 @@ return (
         <p className="role">{role}</p>
         </div>
     </section>
-
+    
     <section className="grid">
         {[...Array(8)].map((_, i) => (
         <div key={i} className="box">{`Box ${i + 1}`}</div>
         ))}
     </section>
+    {role === "admin" && (   // Example: Show button only for admins
+          <button
+            className="admin-button"
+            onClick={() => router.push("/admin")}
+          >
+            Go to Admin Page
+          </button>
+    )}
     </div>
 </>
 );
