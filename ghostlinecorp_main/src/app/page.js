@@ -19,8 +19,6 @@ export default function LoginPage() {
       password,
     });
 
-    console.log("respons data:", data)
-    console.log("error:", error)
 
     if (error) {
       setMessage({ type: "error", text: error.message });

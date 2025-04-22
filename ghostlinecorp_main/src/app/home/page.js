@@ -24,7 +24,6 @@ export default function HomePage() {
           setUser(null);          // <-- Add this to clear user state
           setProfile(null);
           setLoading(false);
-          console.log("No token found")
           return;
         }
 
