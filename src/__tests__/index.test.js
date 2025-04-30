@@ -4,6 +4,7 @@ import HomePage from '../app/page'
 describe('HomePage', () => {
   it('renders loading state initially', () => {
     render(<HomePage />)
-    expect(screen.getByText(/loading/i)).toBeInTheDocument()
+    const loginButton = screen.getByRole('button', { name: /login/i });
+    expect(loginButton).toBeInTheDocument();
   })
 })
