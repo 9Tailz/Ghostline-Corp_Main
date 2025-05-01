@@ -2,9 +2,13 @@
 module.exports = {
   testEnvironment: 'jest-environment-jsdom',
   transform: {
-    // transform JS, JSX, TS, TSX with babel-jest
-    '^.+\.(js|jsx|ts|tsx)': 'babel-jest',
-    },
+    '^.+\\.[jt]sx?$': [
+      'babel-jest',
+      {
+        presets: ['next/babel'],
+      },
+    ],
+  },
     moduleNameMapper: {
     // mock CSS imports
     '\\.(css|scss)': 'identity-obj-proxy',

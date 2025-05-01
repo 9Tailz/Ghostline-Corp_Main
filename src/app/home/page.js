@@ -192,14 +192,7 @@ return (
         <p className="display-name">{displayName}</p>
         <p className="role">{role}</p>
         </div>
-    </section>
-    
-    <section className="grid">
-        {[...Array(8)].map((_, i) => (
-        <div key={i} className="box">{`Box ${i + 1}`}</div>
-        ))}
-    </section>
-    {role === "admin" && (   // Example: Show button only for admins
+        {role === "admin" && (   // Example: Show button only for admins
           <button
             className="admin-button"
             onClick={() => router.push("/admin")}
@@ -207,6 +200,13 @@ return (
             Go to Admin Page
           </button>
     )}
+    </section>
+    
+    <section className="grid">
+        {[...Array(8)].map((_, i) => (
+        <div key={i} className="box">{`Box ${i + 1}`}</div>
+        ))}
+    </section>
     </div>
 </>
 );
